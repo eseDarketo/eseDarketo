@@ -9,47 +9,37 @@ import {
   Logo,
   Line,
   LetterFx,
+  Card,
 } from "@once-ui-system/core";
 
 export default function Home() {
+  const cards = (amount: number) =>{
+    return Array.from({length: amount}, (_, index) => (
+      <Card
+      key={index}
+      direction="column"
+      padding="24"
+      radius="xs-8"
+      border="neutral-medium"
+      fillWidth
+      center
+      background="brand-alpha-weak"
+      >
+        <Heading 
+        variant="display-strong-xl"
+        onBackground="neutral-strong"
+        >
+          Hello World
+        </Heading>
+      </Card>
+    ))
+  };
+
+
   return (
     <Column fillWidth center padding="l" style={{ minHeight: "100vh" }}>
-      <Column maxWidth="s" horizontal="center" gap="l" align="center">
-        <Badge
-          textVariant="code-default-s"
-          border="neutral-alpha-medium"
-          onBackground="neutral-medium"
-          vertical="center"
-          gap="16"
-        >
-          <Logo dark icon="/trademarks/wordmark-dark.svg" href="https://once-ui.com" size="xs" />
-          <Logo light icon="/trademarks/wordmark-light.svg" href="https://once-ui.com" size="xs" />
-          <Line vert background="neutral-alpha-strong" />
-          <Text marginX="4">
-            <LetterFx trigger="instant">An ecosystem, not a UI kit</LetterFx>
-          </Text>
-        </Badge>
-        <Heading variant="display-strong-xl" marginTop="24">
-          Presence that doesn't beg for attention
-        </Heading>
-        <Text
-          variant="heading-default-xl"
-          onBackground="neutral-weak"
-          wrap="balance"
-          marginBottom="16"
-        >
-          Build with clarity, speed, and quiet confidence
-        </Text>
-        <Button
-          id="docs"
-          href="https://docs.once-ui.com/once-ui/quick-start"
-          data-border="rounded"
-          weight="default"
-          prefixIcon="copy"
-          arrowIcon
-        >
-          Explore docs
-        </Button>
+      <Column maxWidth="xs" center gap="l" border="neutral-alpha-medium" radius="xs-8" padding="xl" background="neutral-alpha-weak">
+        {cards(3)}
       </Column>
     </Column>
   );
