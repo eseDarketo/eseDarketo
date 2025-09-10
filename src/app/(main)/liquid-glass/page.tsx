@@ -3,35 +3,10 @@
 import {
   Heading,
   Column,
-  Card,
-  Particle,
 } from "@once-ui-system/core";
 import { GlassCard } from "@/components/GlassCard";
 
 export default function Home() {
-
-  const cards = (amount: number) => {
-    return Array.from({ length: amount }, (_, index) => (
-      <Card
-        key={index}
-        direction="column"
-        padding="24"
-        radius="xs-8"
-        border="neutral-medium"
-        fillWidth
-        center
-        background="brand-alpha-weak"
-      >
-        <Heading
-          variant="display-strong-xl"
-          onBackground="neutral-strong"
-        >
-          Hello World
-        </Heading>
-      </Card>
-    ))
-  };
-
   return (
     <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative", overflow: "hidden" }}>
       <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "8rem 8.5rem" }}>
