@@ -6,22 +6,6 @@ import { useEffect, useRef } from "react"
 export default function GenerativeMosaic() {
     const leafRef = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        if (leafRef.current) {
-            const corners = findCorners(leafRef.current)
-            console.log(corners)
-            const columns = 6
-            const totalCells = 36
-            const possibleMovements = getPossibleMovements(leafRef.current, columns, totalCells)
-            console.log(possibleMovements)
-            const randomMovement = possibleMovements[chooseRandomFromOptions(possibleMovements.length)]
-            console.log(randomMovement)
-            const possibleCornerOrigins = findPossibleCornerOrigin(randomMovement, corners)
-            console.log(possibleCornerOrigins)
-            updateTransformOrigin(leafRef.current, possibleCornerOrigins[chooseRandomFromOptions(possibleCornerOrigins.length)])
-        }
-    }, [])
-
     type Corner = 'top,left' | 'top,right' | 'bottom,right' | 'bottom,left';
 
     interface BorderRadiusCorners {
@@ -31,12 +15,170 @@ export default function GenerativeMosaic() {
         bottomLeft: number;
     }
 
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout;
+        
+        function animateLoop() {
+            animateLeaf();
+            // Schedule next animation after current one completes (1s) + buffer time
+            timeoutId = setTimeout(animateLoop, 1000);
+        }
+        
+        // Start the animation loop
+        animateLoop();
+        
+        // Cleanup on unmount
+        return () => clearTimeout(timeoutId);
+    }, [])
+
+    function animateLeaf() {
+        if (leafRef.current) {
+            const corners = findCorners(leafRef.current)
+            console.log(corners)
+            const columns = 6
+            const totalCells = 12
+            const possibleMovements = getPossibleMovements(leafRef.current, columns, totalCells)
+            console.log(possibleMovements)
+            const randomMovement = possibleMovements[chooseRandomFromOptions(possibleMovements.length)]
+            console.log(randomMovement)
+            const possibleCornerOrigins = findPossibleCornerOrigin(randomMovement, corners)
+            console.log(possibleCornerOrigins)
+            const randomCornerOrigin = possibleCornerOrigins[chooseRandomFromOptions(possibleCornerOrigins.length)]
+            console.log(randomCornerOrigin)
+            updateTransformOrigin(leafRef.current, randomCornerOrigin)
+            moveLeaf(leafRef.current, randomMovement, randomCornerOrigin)
+        }
+    }
 
 
+    function moveLeaf(leafElement: HTMLElement, movement: string, transformOrigin: Corner) {
+        // Determine rotation direction based on movement and transform origin
+        const rotationDegrees = getRotationDegrees(movement, transformOrigin);
+
+        // Apply transition properties
+        leafElement.style.transition = 'transform .5s ease';
+
+        // Apply the rotation
+        leafElement.style.transform = `rotate(${rotationDegrees}deg)`;
+
+        // After rotation completes, update position and reset rotation
+        setTimeout(() => {
+            // Calculate new position based on movement
+            const actualCellSize = leafElement.offsetHeight;
+            const currentLeft = parseFloat(window.getComputedStyle(leafElement).left) || 0;
+            const currentTop = parseFloat(window.getComputedStyle(leafElement).top) || 0;
+
+            let newLeft = currentLeft;
+            let newTop = currentTop;
+
+            switch (movement) {
+                case 'right':
+                    newLeft += actualCellSize;
+                    break;
+                case 'left':
+                    newLeft -= actualCellSize;
+                    break;
+                case 'bottom':
+                    newTop += actualCellSize;
+                    break;
+                case 'top':
+                    newTop -= actualCellSize;
+                    break;
+            }
+
+            const currentBorderRadius = window.getComputedStyle(leafElement).borderRadius;
+            const newBorderRadius = calculateNewBorderRadius(currentBorderRadius, rotationDegrees);
+
+            // Update position and reset transform
+            leafElement.style.transition = 'none';
+            leafElement.style.left = `${newLeft}px`;
+            leafElement.style.top = `${newTop}px`;
+            leafElement.style.transform = 'rotate(0deg)';
+            leafElement.style.borderRadius = newBorderRadius
+
+            // Re-enable transitions after a frame
+            requestAnimationFrame(() => {
+                leafElement.style.transition = '';
+            });
+        }, 500);
+    }
+
+    function calculateNewBorderRadius(currentBorderRadius: string, rotationDegrees: number): string {
+        // Parse current border radius to get the corner values
+        const corners = parseBorderRadius(currentBorderRadius);
+
+        // Normalize rotation to 0-360 range
+        const normalizedRotation = ((rotationDegrees % 360) + 360) % 360;
+
+        // Determine how many 90-degree steps we've rotated
+        const steps = Math.round(normalizedRotation / 90);
+
+        // Create array of corner values in order: [TL, TR, BR, BL]
+        const cornerArray = [
+            corners.topLeft,
+            corners.topRight,
+            corners.bottomRight,
+            corners.bottomLeft
+        ];
+
+        // Rotate the array based on the rotation direction
+        // Positive rotation (clockwise) moves corners counter-clockwise in the array
+        // Negative rotation (counter-clockwise) moves corners clockwise in the array
+        const rotatedCorners = rotateArray(cornerArray, -steps); // Negative because corners move opposite to rotation
+
+        // Convert back to CSS border-radius string
+        // If all corners are the same, return single value
+        if (rotatedCorners.every(val => val === rotatedCorners[0])) {
+            return rotatedCorners[0] === 0 ? '0' : `${rotatedCorners[0]}%`;
+        }
+
+        // Otherwise return all four values
+        return rotatedCorners.map(val => val === 0 ? '0' : `${val}%`).join(' ');
+    }
+
+    function rotateArray<T>(arr: T[], steps: number): T[] {
+        const len = arr.length;
+        const normalizedSteps = ((steps % len) + len) % len;
+        return [...arr.slice(normalizedSteps), ...arr.slice(0, normalizedSteps)];
+    }
+
+    function getRotationDegrees(movement: string, transformOrigin: Corner): number {
+        // Map to determine rotation based on movement direction and pivot point
+        const rotationMap: Record<string, Record<Corner, number>> = {
+            'right': {
+                'top,left': 0,
+                'bottom,left': 0,
+                'top,right': -90,
+                'bottom,right': 90
+            },
+            'left': {
+                'top,right': 0,
+                'bottom,right': 0,
+                'top,left': 90,
+                'bottom,left': -90
+            },
+            'bottom': {
+                'top,left': 0,
+                'top,right': 0,
+                'bottom,left': 90,
+                'bottom,right': -90
+            },
+            'top': {
+                'bottom,left': 0,
+                'bottom,right': 0,
+                'top,left': -90,
+                'top,right': 90
+            }
+        };
+
+        return rotationMap[movement]?.[transformOrigin] || 0;
+    }
 
 
     function updateTransformOrigin(targetElement: HTMLElement, origin: Corner) {
-        targetElement.style.transformOrigin = origin
+        // origin is a string like 'top,left' we need to convert it to a string like 'top left'
+        const originString = origin.replace(',', ' ')
+        targetElement.style.transformOrigin = originString
     }
 
     function findCorners(element: HTMLElement): Corner[] {
@@ -169,7 +311,7 @@ export default function GenerativeMosaic() {
             <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
                 <Grid
                     columns="6"
-                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative" }}
+                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative", overflow: "hidden" }}
                 >
                     <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
                     <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
