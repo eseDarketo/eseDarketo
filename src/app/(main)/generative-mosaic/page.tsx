@@ -4,7 +4,16 @@ import { Grid, Row, Column } from "@once-ui-system/core"
 import { useEffect, useRef } from "react"
 
 export default function GenerativeMosaic() {
-    const leafRef = useRef<HTMLDivElement>(null)
+    const leafsAmount = 60
+    const leafRefs = useRef<HTMLDivElement[]>([])
+    const startTimeoutIds = useRef<number[]>([])
+    const intervalIds = useRef<number[]>([])
+    const initialStatesRef = useRef<{ row: number; col: number; color: string; borderRadius: string }[]>([])
+    const animateAllAtOnce = false
+    const intervalMs = 2000
+    const animateReverseOrder = true
+
+    const colors = [ "#ffb300", "#f30", "#ffb300", "#f30", "#ff6842", "#ffb300", "#f30", "#cc2900", "#ffb300", "#f30" ]
 
     type Corner = 'top,left' | 'top,right' | 'bottom,right' | 'bottom,left';
 
@@ -16,37 +25,77 @@ export default function GenerativeMosaic() {
     }
 
     useEffect(() => {
-        let timeoutId: NodeJS.Timeout;
-        
-        function animateLoop() {
-            animateLeaf();
-            // Schedule next animation after current one completes (1s) + buffer time
-            timeoutId = setTimeout(animateLoop, 1000);
-        }
-        
-        // Start the animation loop
-        animateLoop();
-        
-        // Cleanup on unmount
-        return () => clearTimeout(timeoutId);
-    }, [])
+        // Clear any existing timers before (re)starting
+        startTimeoutIds.current.forEach(id => window.clearTimeout(id))
+        intervalIds.current.forEach(id => window.clearInterval(id))
+        startTimeoutIds.current = []
+        intervalIds.current = []
 
-    function animateLeaf() {
-        if (leafRef.current) {
-            const corners = findCorners(leafRef.current)
-            console.log(corners)
+        if (animateAllAtOnce) {
+            // Animate all leaves in sync
+            const startId = window.setTimeout(() => {
+                leafRefs.current.forEach((leafElement) => {
+                    if (leafElement) animateLeaf(leafElement)
+                })
+                const intervalId = window.setInterval(() => {
+                    leafRefs.current.forEach((leafElement) => {
+                        if (leafElement) animateLeaf(leafElement)
+                    })
+                }, intervalMs)
+                intervalIds.current.push(intervalId)
+            }, 0)
+            startTimeoutIds.current.push(startId)
+        } else {
+            // Stagger: start/animate leaves in Fibonacci-sized batches
+            const total = leafRefs.current.length
+            const indices = Array.from({ length: total }, (_, i) => i)
+            if (animateReverseOrder) indices.reverse()
+            const batchSizes: number[] = []
+            let a = 1, b = 1
+            while (batchSizes.reduce((s, n) => s + n, 0) < total) {
+                batchSizes.push(a)
+                const next = a + b
+                a = b
+                b = next
+            }
+            let assigned = 0
+            batchSizes.forEach((size, batchIndex) => {
+                for (let i = 0; i < size && assigned < total; i++) {
+                    const leafElement = leafRefs.current[indices[assigned]]
+                    if (leafElement) {
+                        const startId = window.setTimeout(() => {
+                            animateLeaf(leafElement)
+                            const intervalId = window.setInterval(() => {
+                                animateLeaf(leafElement)
+                            }, intervalMs)
+                            intervalIds.current.push(intervalId)
+                        }, batchIndex * intervalMs)
+                        startTimeoutIds.current.push(startId)
+                    }
+                    assigned++
+                }
+            })
+        }
+
+        return () => {
+            startTimeoutIds.current.forEach(id => window.clearTimeout(id))
+            intervalIds.current.forEach(id => window.clearInterval(id))
+            startTimeoutIds.current = []
+            intervalIds.current = []
+        }
+    }, [leafsAmount, animateAllAtOnce, intervalMs, animateReverseOrder])
+
+    function animateLeaf(leafElement: HTMLElement) {
+        if (leafElement) {
+            const corners = findCorners(leafElement)
             const columns = 6
             const totalCells = 12
-            const possibleMovements = getPossibleMovements(leafRef.current, columns, totalCells)
-            console.log(possibleMovements)
+            const possibleMovements = getPossibleMovements(leafElement, columns, totalCells)
             const randomMovement = possibleMovements[chooseRandomFromOptions(possibleMovements.length)]
-            console.log(randomMovement)
             const possibleCornerOrigins = findPossibleCornerOrigin(randomMovement, corners)
-            console.log(possibleCornerOrigins)
             const randomCornerOrigin = possibleCornerOrigins[chooseRandomFromOptions(possibleCornerOrigins.length)]
-            console.log(randomCornerOrigin)
-            updateTransformOrigin(leafRef.current, randomCornerOrigin)
-            moveLeaf(leafRef.current, randomMovement, randomCornerOrigin)
+            updateTransformOrigin(leafElement, randomCornerOrigin)
+            moveLeaf(leafElement, randomMovement, randomCornerOrigin)
         }
     }
 
@@ -56,7 +105,7 @@ export default function GenerativeMosaic() {
         const rotationDegrees = getRotationDegrees(movement, transformOrigin);
 
         // Apply transition properties
-        leafElement.style.transition = 'transform .5s ease';
+        leafElement.style.transition = 'transform 1s ease';
 
         // Apply the rotation
         leafElement.style.transform = `rotate(${rotationDegrees}deg)`;
@@ -100,7 +149,7 @@ export default function GenerativeMosaic() {
             requestAnimationFrame(() => {
                 leafElement.style.transition = '';
             });
-        }, 500);
+        }, 1000);
     }
 
     function calculateNewBorderRadius(currentBorderRadius: string, rotationDegrees: number): string {
@@ -307,35 +356,64 @@ export default function GenerativeMosaic() {
 
 
     return (
-        <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative", overflow: "hidden" }}>
-            <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
+        <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: "#f5f7f8" }}>
+            <Column maxWidth="l" center gap="l"  radius="xs-8"  style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
                 <Grid
                     columns="6"
-                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative", overflow: "hidden" }}
+                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative" }}
                 >
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill background="neutral-alpha-weak" border="neutral-alpha-medium" style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <div
-                        ref={leafRef}
-                        style={{
-                            aspectRatio: "1/1",
-                            height: "8rem",
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            background: "#D3D3D3",
-                            borderRadius: "0 100% 0 0"
-                        }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    {(() => {
+                        // Initialize once or when amount changes
+                        if (initialStatesRef.current.length !== leafsAmount) {
+                            const rows = Math.ceil(12 / 6) // totalCells/columns
+                            const radiusOptions = [
+                                "100% 0 0 0",   // top-left rounded
+                                "0 100% 0 0",   // top-right rounded
+                                "0 0 100% 0",   // bottom-right rounded
+                                "0 0 0 100%"    // bottom-left rounded
+                            ]
+                            initialStatesRef.current = Array.from({ length: leafsAmount }).map(() => {
+                                const row = Math.floor(Math.random() * rows)
+                                const col = Math.floor(Math.random() * 6)
+                                const color = colors[Math.floor(Math.random() * colors.length)]
+                                const borderRadius = radiusOptions[Math.floor(Math.random() * radiusOptions.length)]
+                                return { row, col, color, borderRadius }
+                            })
+                        }
+                        return Array.from({ length: leafsAmount }).map((_, index) => {
+                            const init = initialStatesRef.current[index]
+                            return (
+                        <div
+                            key={index}
+                            ref={(el) => {
+                                if (el) {
+                                    leafRefs.current[index] = el
+                                }
+                            }}
+                            style={{
+                                aspectRatio: "1/1",
+                                height: "8rem",
+                                position: "absolute",
+                                top: `calc(${init.row} * 8rem)`,
+                                left: `calc(${init.col} * 8rem)`,
+                                background: init.color,
+                                borderRadius: init.borderRadius
+                            }} />
+                            )
+                        })
+                    })()}
                 </Grid>
             </Column>
         </Column>
