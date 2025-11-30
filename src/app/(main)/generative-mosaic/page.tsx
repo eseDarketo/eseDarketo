@@ -4,12 +4,12 @@ import { Grid, Row, Column } from "@once-ui-system/core"
 import { useEffect, useRef } from "react"
 
 export default function GenerativeMosaic() {
-    const leafsAmount = 60
+    const leafsAmount = 120
     const leafRefs = useRef<HTMLDivElement[]>([])
     const startTimeoutIds = useRef<number[]>([])
     const intervalIds = useRef<number[]>([])
     const initialStatesRef = useRef<{ row: number; col: number; color: string; borderRadius: string }[]>([])
-    const animateAllAtOnce = false
+    const animateAllAtOnce = true
     const intervalMs = 2000
     const animateReverseOrder = true
 
@@ -88,8 +88,8 @@ export default function GenerativeMosaic() {
     function animateLeaf(leafElement: HTMLElement) {
         if (leafElement) {
             const corners = findCorners(leafElement)
-            const columns = 6
-            const totalCells = 12
+            const columns = 12
+            const totalCells = 48
             const possibleMovements = getPossibleMovements(leafElement, columns, totalCells)
             const randomMovement = possibleMovements[chooseRandomFromOptions(possibleMovements.length)]
             const possibleCornerOrigins = findPossibleCornerOrigin(randomMovement, corners)
@@ -357,11 +357,47 @@ export default function GenerativeMosaic() {
 
     return (
         <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: "#f5f7f8" }}>
-            <Column maxWidth="l" center gap="l"  radius="xs-8"  style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
+            <Column center gap="l"  radius="xs-8"  style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
                 <Grid
-                    columns="6"
-                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative" }}
+                    columns="12"
+                    style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative",  }}
                 >
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
                     <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
                     <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
                     <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
@@ -377,7 +413,7 @@ export default function GenerativeMosaic() {
                     {(() => {
                         // Initialize once or when amount changes
                         if (initialStatesRef.current.length !== leafsAmount) {
-                            const rows = Math.ceil(12 / 6) // totalCells/columns
+                            const rows = Math.ceil(48 / 12) // totalCells/columns
                             const radiusOptions = [
                                 "100% 0 0 0",   // top-left rounded
                                 "0 100% 0 0",   // top-right rounded
@@ -386,7 +422,7 @@ export default function GenerativeMosaic() {
                             ]
                             initialStatesRef.current = Array.from({ length: leafsAmount }).map(() => {
                                 const row = Math.floor(Math.random() * rows)
-                                const col = Math.floor(Math.random() * 6)
+                                const col = Math.floor(Math.random() * 12)
                                 const color = colors[Math.floor(Math.random() * colors.length)]
                                 const borderRadius = radiusOptions[Math.floor(Math.random() * radiusOptions.length)]
                                 return { row, col, color, borderRadius }

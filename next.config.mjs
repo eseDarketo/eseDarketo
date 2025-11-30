@@ -4,6 +4,7 @@ const nextConfig = {
     compiler: "modern",
     silenceDeprecations: ["legacy-js-api"],
   },
+  devIndicators: false,
 };
 
 export default nextConfig;
