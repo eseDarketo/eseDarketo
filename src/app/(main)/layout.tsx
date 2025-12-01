@@ -7,6 +7,7 @@ import classNames from "classnames";
 import { baseURL, meta, fonts, effects, style, dataStyle } from "@/resources/once-ui.config";
 import { Meta, Schema,  Column, Flex, opacity, SpacingToken, Background} from "@once-ui-system/core";
 import { Providers } from '@/components/Providers';
+import { Navigation } from '@/components/Navigation';
 
 export async function generateMetadata() {
   return Meta.generate({
@@ -149,6 +150,7 @@ export default function RootLayout({
               color: effects.lines.color,
             }}
           />
+          <Navigation />
           {children}
         </Column>
       </Providers>
