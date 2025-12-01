@@ -88,8 +88,8 @@ export default function GenerativeMosaic() {
     function animateLeaf(leafElement: HTMLElement) {
         if (leafElement) {
             const corners = findCorners(leafElement)
-            const columns = 6
-            const totalCells = 12
+            const columns = 8
+            const totalCells = 32
             const possibleMovements = getPossibleMovements(leafElement, columns, totalCells)
             const randomMovement = possibleMovements[chooseRandomFromOptions(possibleMovements.length)]
             const possibleCornerOrigins = findPossibleCornerOrigin(randomMovement, corners)
@@ -357,27 +357,18 @@ export default function GenerativeMosaic() {
 
     return (
         <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative" }}>
-            <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "4rem 5rem", overflow: "hidden" }}>
+            <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "2rem", overflow: "hidden" }}>
                 <Grid
-                    columns="6"
+                    columns="8"
                     style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative" }}
                 >
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
-                    <Row fill   style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    {Array.from({ length: 32 }).map((_, i) => (
+                        <Row key={i} fill style={{ aspectRatio: "1/1", height: "8rem" }} />
+                    ))}
                     {(() => {
                         // Initialize once or when amount changes
                         if (initialStatesRef.current.length !== leafsAmount) {
-                            const rows = Math.ceil(12 / 6) // totalCells/columns
+                            const rows = Math.ceil(32 / 8) // totalCells/columns
                             const radiusOptions = [
                                 "100% 0 0 0",   // top-left rounded
                                 "0 100% 0 0",   // top-right rounded
@@ -386,7 +377,7 @@ export default function GenerativeMosaic() {
                             ]
                             initialStatesRef.current = Array.from({ length: leafsAmount }).map(() => {
                                 const row = Math.floor(Math.random() * rows)
-                                const col = Math.floor(Math.random() * 6)
+                                const col = Math.floor(Math.random() * 8)
                                 const color = colors[Math.floor(Math.random() * colors.length)]
                                 const borderRadius = radiusOptions[Math.floor(Math.random() * radiusOptions.length)]
                                 return { row, col, color, borderRadius }
