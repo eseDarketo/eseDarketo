@@ -1,7 +1,7 @@
 "use client"
 
 import { Grid, Row, Column } from "@once-ui-system/core"
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export default function GenerativeMosaic() {
     const leafsAmount = 60
@@ -9,6 +9,7 @@ export default function GenerativeMosaic() {
     const startTimeoutIds = useRef<number[]>([])
     const intervalIds = useRef<number[]>([])
     const initialStatesRef = useRef<{ row: number; col: number; color: string; borderRadius: string }[]>([])
+    const [isInitialized, setIsInitialized] = useState(false)
     const animateAllAtOnce = true
     const intervalMs = 2000
     const animateReverseOrder = true
@@ -23,6 +24,27 @@ export default function GenerativeMosaic() {
         bottomRight: number;
         bottomLeft: number;
     }
+
+    // Initialize positions on mount (client-side only)
+    useEffect(() => {
+        if (initialStatesRef.current.length === 0) {
+            const rows = Math.ceil(32 / 8) // totalCells/columns
+            const radiusOptions = [
+                "100% 0 0 0",   // top-left rounded
+                "0 100% 0 0",   // top-right rounded
+                "0 0 100% 0",   // bottom-right rounded
+                "0 0 0 100%"    // bottom-left rounded
+            ]
+            initialStatesRef.current = Array.from({ length: leafsAmount }).map(() => {
+                const row = Math.floor(Math.random() * rows)
+                const col = Math.floor(Math.random() * 8)
+                const color = colors[Math.floor(Math.random() * colors.length)]
+                const borderRadius = radiusOptions[Math.floor(Math.random() * radiusOptions.length)]
+                return { row, col, color, borderRadius }
+            })
+            setIsInitialized(true)
+        }
+    }, [])
 
     useEffect(() => {
         // Clear any existing timers before (re)starting
@@ -365,46 +387,28 @@ export default function GenerativeMosaic() {
                     {Array.from({ length: 32 }).map((_, i) => (
                         <Row key={i} fill style={{ aspectRatio: "1/1", height: "8rem" }} />
                     ))}
-                    {(() => {
-                        // Initialize once or when amount changes
-                        if (initialStatesRef.current.length !== leafsAmount) {
-                            const rows = Math.ceil(32 / 8) // totalCells/columns
-                            const radiusOptions = [
-                                "100% 0 0 0",   // top-left rounded
-                                "0 100% 0 0",   // top-right rounded
-                                "0 0 100% 0",   // bottom-right rounded
-                                "0 0 0 100%"    // bottom-left rounded
-                            ]
-                            initialStatesRef.current = Array.from({ length: leafsAmount }).map(() => {
-                                const row = Math.floor(Math.random() * rows)
-                                const col = Math.floor(Math.random() * 8)
-                                const color = colors[Math.floor(Math.random() * colors.length)]
-                                const borderRadius = radiusOptions[Math.floor(Math.random() * radiusOptions.length)]
-                                return { row, col, color, borderRadius }
-                            })
-                        }
-                        return Array.from({ length: leafsAmount }).map((_, index) => {
-                            const init = initialStatesRef.current[index]
-                            return (
-                        <div
-                            key={index}
-                            ref={(el) => {
-                                if (el) {
-                                    leafRefs.current[index] = el
-                                }
-                            }}
-                            style={{
-                                aspectRatio: "1/1",
-                                height: "8rem",
-                                position: "absolute",
-                                top: `calc(${init.row} * 8rem)`,
-                                left: `calc(${init.col} * 8rem)`,
-                                background: init.color,
-                                borderRadius: init.borderRadius
-                            }} />
-                            )
-                        })
-                    })()}
+                    {isInitialized && Array.from({ length: leafsAmount }).map((_, index) => {
+                        const init = initialStatesRef.current[index]
+                        return (
+                            <div
+                                key={index}
+                                ref={(el) => {
+                                    if (el) {
+                                        leafRefs.current[index] = el
+                                    }
+                                }}
+                                style={{
+                                    aspectRatio: "1/1",
+                                    height: "8rem",
+                                    position: "absolute",
+                                    top: `calc(${init.row} * 8rem)`,
+                                    left: `calc(${init.col} * 8rem)`,
+                                    background: init.color,
+                                    borderRadius: init.borderRadius
+                                }}
+                            />
+                        )
+                    })}
                 </Grid>
             </Column>
         </Column>
