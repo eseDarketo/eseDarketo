@@ -9,7 +9,7 @@ export default function GenerativeMosaic() {
     const startTimeoutIds = useRef<number[]>([])
     const intervalIds = useRef<number[]>([])
     const initialStatesRef = useRef<{ row: number; col: number; color: string; borderRadius: string }[]>([])
-    const animateAllAtOnce = false
+    const animateAllAtOnce = true
     const intervalMs = 2000
     const animateReverseOrder = true
 
@@ -356,8 +356,8 @@ export default function GenerativeMosaic() {
 
 
     return (
-        <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative", overflow: "hidden", background: "#f5f7f8" }}>
-            <Column maxWidth="l" center gap="l"  radius="xs-8"  style={{ aspectRatio: "16/9", padding: "4rem 5rem" }}>
+        <Column fillWidth center padding="l" style={{ minHeight: "100vh", position: "relative" }}>
+            <Column maxWidth="l" center gap="l" border="neutral-alpha-medium" radius="xs-8" background="neutral-alpha-weak" style={{ aspectRatio: "16/9", padding: "4rem 5rem", overflow: "hidden" }}>
                 <Grid
                     columns="6"
                     style={{ alignItems: "start", justifyContent: "start", gap: "0", position: "relative" }}
