@@ -4,7 +4,7 @@ import { Grid, Row, Column } from "@once-ui-system/core"
 import { useEffect, useRef, useState } from "react"
 
 export default function GenerativeMosaic() {
-    const leafsAmount = 60
+    const leafsAmount = 105
     const leafRefs = useRef<HTMLDivElement[]>([])
     const startTimeoutIds = useRef<number[]>([])
     const intervalIds = useRef<number[]>([])
